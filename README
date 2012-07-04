@@ -1,0 +1,44 @@
+To build OTOO test code, you need:
+
+ * g++ or icpc
+ * rake
+ * netcdf
+ * Eigen  : http://eigen.tuxfamily.org/index.php?title=Main_Page 
+ * OpenCL SDK and C++ interface
+
+We have tested this code on Ubuntu 10.04 LTS.
+Except Eigen and OpenCL SDK, you can install the required packages with the command such as:
+
+$ sudo aptitude install rake libnetcdf-dev gfortran g++
+
+
+Eigen
+
+  We have tested this code with Eigen 3.1.0-alpha2.
+
+OpenCL SDK
+  
+  We have tested this code with SDKs from AMD, Apple, Intel and Nvidia.
+  To build this code, you need "cl.hpp" header file.
+  It is available at http://www.khronos.org/registry/cl/
+  I have tested the code with OpenCL 1.1.
+
+--------------------------------------------------------------------------------------
+Testing
+
+0. edit "conf.rb" for setting the path to OpenCL SDK
+  You will need "CL/cl.hpp".
+
+1. build
+ $ rake
+
+2. generate initial models
+ $ cd NBODYMODEL/Plummer
+ $ rake
+ $ ./gen/zsh
+
+3. test models
+ $ cd NBODYMODEL
+ $ ../run Plummer/model_100.cdf 0 0
+   This tests the run with 100K particles.
+   Edit "NBODY.conf" for changing time duration of the run.
