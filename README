@@ -42,3 +42,8 @@ Testing
  $ ../run Plummer/model_100.cdf 0 0
    This tests the run with 100K particles.
    Edit "NBODY.conf" for changing time duration of the run.
+
+--------------------------------------------------------------------------------------
+Reference
+  http://dx.doi.org/10.1016/j.jocs.2011.01.006
+  http://arxiv.org/abs/1206.1199
