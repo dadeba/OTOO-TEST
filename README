@@ -3,18 +3,23 @@ To build OTOO test code, you need:
  * g++ or icpc
  * rake
  * netcdf
+ * GSL
  * Eigen  : http://eigen.tuxfamily.org/index.php?title=Main_Page 
  * OpenCL SDK and C++ interface
 
 We have tested this code on Ubuntu 10.04 LTS.
 Except Eigen and OpenCL SDK, you can install the required packages with the command such as:
 
-$ sudo aptitude install rake libnetcdf-dev gfortran g++
+$ sudo aptitude install rake libnetcdf-dev gfortran g++ libgsl0-dev 
 
 
 Eigen
 
   We have tested this code with Eigen 3.1.0-alpha2.
+
+GSL
+  
+  We use a random number generator in GSL for generating initial N-body models.
 
 OpenCL SDK
   
