@@ -79,17 +79,9 @@ namespace OTOO {
     void SetEPS(float);
     void SetALLEPS2();
     void GetMortonOrder(uint64 *);
-    void GetMethod1Order(uint64 *, uint64 &, float);
-    void GetMethod1Data(uint64 *, uint64, ArrayX4 &);
-    uint64 GetParticles(uint64, uint64 *);
-    void ClearFlags();
-    uint64 CountFlags();
-    void CheckFlags();
-    void CheckVisited(uint64);
 
     void ConstructKeybasedTree(uint64, ArrayX3 &, ArrayX &);
     void CalcGravityOpenCL(ArrayX3 &, ArrayX &);
-    void DumpTreeData();
     void CalcGravity(ArrayX3 &, ArrayX &);
     void CalcRootBox(uint64, ArrayX3 &, ArrayX &);
     void SetParticles(uint64, ArrayX3 &, ArrayX &);
@@ -149,8 +141,6 @@ namespace OTOO {
     ArrayX S;
     int *next, *more;
     Keys *kk;
-    std::vector<bool> cell_visited;
-    //    std::vector<uint64> cell_level;
     uint64 Root;
     float RootSize;
 
@@ -218,10 +208,6 @@ namespace OTOO {
 
     next = new int[nalloc];
     more = new int[nalloc];
-
-    cell_visited.resize(nalloc);
-    //    cell_level.resize(nalloc);
-
     kk   = new Keys[nalloc0];
 
     SetEPS(0.001);
@@ -591,119 +577,6 @@ namespace OTOO {
     }
   }
 
-  uint64 GravityTree::GetParticles(uint64 root, uint64 *list)
-  {
-    uint64 c_node, stop;
-    uint64 ccc = 0;
-
-    c_node = more[root];
-    stop   = next[root];
-    while(c_node != stop) {
-      if ( Particle(c_node) ) {
-	list[ccc++] = c_node;
-	c_node = next[c_node];
-      } else {
-	c_node = more[c_node];
-      }
-    }
-
-    return ccc;
-  }
-
-  void GravityTree::ClearFlags()
-  {
-    for(uint64 i = 0; i < nalloc; i++) cell_visited[i] = false;
-  }
-
-  uint64 GravityTree::CountFlags()
-  {
-    uint64 c = 0;
-    for(uint64 i = 0; i < nalloc; i++) {
-      if (cell_visited[i]) c++;
-    }
-    return c;
-  }
-
-  void GravityTree::CheckVisited(uint64 root)
-  {
-    uint64 c_node, stop;
-    bool flag = false;
-    c_node = more[root];
-    stop   = next[root];
-    while(c_node != stop) {
-      if (cell_visited[c_node]) {
-	flag = true;
-      }
-      c_node = next[c_node];      
-    }
-    if (flag) cell_visited[root] = false;
-  }
-
-  void GravityTree::CheckFlags()
-  {
-    double sum = 0.0;
-    for(uint64 i = 0; i < n+ncell; i++) {
-      if (cell_visited[i]) {
-	sum += MS(i);
-      }
-    }
-    std::cout << "Mass " << sum << "\n";
-
-    cell_visited[Root] = false;
-    uint64 c_node = more[Root];
-    uint64 stop   = next[Root];
-    while(c_node != stop) {
-      if ( Particle(c_node) ) {
-	c_node = next[c_node];
-      } else {
-	CheckVisited(c_node);
-	c_node = more[c_node];
-      }
-    }
-
-    uint64 c = 0;
-    sum = 0.0;
-    for(uint64 i = 0; i < n+ncell; i++) {
-      if (cell_visited[i]) {
-	c++;
-	sum += MS(i);
-      }
-    }
-    std::cout << "Mass " << sum << "\n";
-    std::cout << "Count " << c << "\n";
-  }
-
-  void GravityTree::GetMethod1Order(uint64 *list, uint64 &nl, float m_frac)
-  {
-    uint64 c_node, stop;
-    uint64 ccc = 0;
-    float mass_root = m_frac*MS(Root);
-
-    c_node = more[Root];
-    stop   = next[Root];
-    while(c_node != stop) {
-      if (MS(c_node) < mass_root) {
-	list[ccc++] = c_node;
-	c_node = next[c_node];
-      } else {
-	c_node = more[c_node];
-      }
-    }
-
-    nl = ccc; 
-  }
-
-  void GravityTree::GetMethod1Data(uint64 *list, uint64 nl, ArrayX4 &b)
-  {
-    for(uint64 i = 0; i < nl; i++) {
-      uint64 j = list[i];
-      b(i,0) = PX(j);
-      b(i,1) = PY(j);
-      b(i,2) = PZ(j);
-      b(i,3) = MS(j);
-    }
-  }
-
   void GravityTree::CalcKeys()
   {
     float cx, cy, cz;
@@ -818,34 +691,6 @@ namespace OTOO {
     }
   }
 
-  void GravityTree::CalcGravity(float &ppx, float &ppy, float &ppz)
-  {
-    uint64 self;
-    float dx, dy, dz, r2;
-
-    self = Root;
-    while(self != empty) {
-      dx = ppx - PX(self);
-      dy = ppy - PY(self);
-      dz = ppz - PZ(self);
-      r2 = dx*dx + dy*dy + dz*dz;
-      
-      if ( !CellOrNot(self) ) {
-	cell_visited[self] = true;
-
-	self = next[self];
-      } else {
-	if (r2 > S[self]) {
-	  cell_visited[self] = true;
-
-	  self = next[self];
-	} else {
-	  self = more[self];
-	}
-      }
-    }
-  }
-
   void GravityTree::CalcGravity(ArrayX3 &A, ArrayX &P)
   {
     uint64 count = 0;
@@ -867,24 +712,6 @@ namespace OTOO {
       count += body + cell;
     }
     std::cout << count << " " << (float)count/n << "\n";
-  }
-
-  void GravityTree::DumpTreeData()
-  {
-    FILE *fp;
-    fp = fopen("tree.txt", "w");
-
-    uint64 ns = n + ncell;
-    for(uint64 i = 0; i < ns; i++) {
-      fprintf(fp, "%i %i %i %e %e %e %e %e\n", (int)i, next[i], more[i], 
-	      B.row(i).x(), 
-	      B.row(i).y(), 
-	      B.row(i).z(), 
-	      B.row(i).w(), 
-	      S[i]);
-    }
-
-    fclose(fp);
   }
 
   void GravityTree::CalcGravityOpenCL(ArrayX3 &A, ArrayX &P)

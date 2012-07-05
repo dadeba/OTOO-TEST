@@ -14,7 +14,6 @@ public:
     ~NBODYmodel();
     void Setup(uint64, uint64);
     void Loop();
-    void TEST();
     double GetTotalTime();
     double GetKernelTime1();
     double GetKernelTime2();
@@ -164,93 +163,6 @@ public:
   {
     E(x, m, v, a, p, ke, pe, nall);
     te = ke + pe;
-  }
-
-  void NBODYmodel::TEST()
-  {
-    uint64 ntest = 1024*10;
-
-    std::vector<uint64> l;
-    Eigen::ArrayX4d acc_double;
-
-    l.resize(ntest);
-    Allocate(ntest, acc_double);
-
-    for(uint64 i = 0; i < ntest; i++) {
-      l[i] = (ntest*i + 1000) % nall;
-    }
-
-    double e2 = eps*eps;
-#pragma omp parallel for
-    for(uint64 k = 0; k < ntest; k++) {
-      uint64 i = l[k];
-
-      //      Vector3 acc;
-      Eigen::Vector4d acc;
-      acc << 0.0, 0.0, 0.0, 0.0;
-      for(uint64 j = 0; j < nall; j++) {
-	double dx, dy, dz;
-	double ax, ay, az;
-	double r1i, r3i, mj, r2; 
-
-	if (i == j) continue;
-
-	mj = m(j);
-
-	dx = (double)x.row(j).x() - (double)x.row(i).x();
-	dy = (double)x.row(j).y() - (double)x.row(i).y();
-	dz = (double)x.row(j).z() - (double)x.row(i).z();
-	r2 = dx*dx + dy*dy + dz*dz;
-
-	r1i = 1.0/sqrt(r2+e2);
-	r3i = r1i*r1i*r1i;
-	ax  = mj*dx*r3i;
-	ay  = mj*dy*r3i;
-	az  = mj*dz*r3i;
-	acc.x() += ax; 
-	acc.y() += ay; 
-	acc.z() += az; 
-	acc.w() -= mj*r1i;
-      }
-
-      acc_double.row(k) = acc;
-    }
-
-    for(uint64 q = 0; q < 200; q++) {
-      float tol = pow(10.0, 3.5 - 0.1*q);
-      if (tol < 1.0e-5) break;
-
-      grav_err_max = tol;
-
-      ClearCounters();
-      Force();
-
-      Eigen::Vector4d err;
-      err << 0.0, 0.0, 0.0, 0.0;
-      double a_norm = 0.0;
-
-      for(uint64 k = 0; k < ntest; k++) {
-	uint64 i = l[k];
-
-	Eigen::Vector4d a_t;
-	a_t.x() = a.row(i).x();
-	a_t.y() = a.row(i).y();
-	a_t.z() = a.row(i).z();
-	a_t.w() = 0.0;
-	Eigen::Vector4d a_d = acc_double.row(k);
-	a_d.w() = 0.0;
-	Eigen::Vector4d aaa = a_d - a_t;
-
-	a_norm += aaa.norm();
-	err.x() += std::abs(aaa.x());
-	err.y() += std::abs(aaa.y());
-	err.z() += std::abs(aaa.z());
-	err.w() += std::abs(acc_double.row(k).w() - p(i));
-      }
-      err /= ntest;
-      a_norm /= ntest;
-      std::cout << tol << "\t" << err.transpose() << "\t" << a_norm << "\t" << accum_time_gk << "\n";
-    }
   }
 
   void NBODYmodel::Loop()
