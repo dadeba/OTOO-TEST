@@ -12,22 +12,20 @@ Except Eigen and OpenCL SDK, you can install the required packages with the comm
 
 $ sudo aptitude install rake libnetcdf-dev gfortran g++ libgsl0-dev 
 
-
 Eigen
 
   We have tested this code with Eigen 3.1.0-alpha2.
-
-GSL
-  
-  We use a random number generator in GSL for generating initial N-body models.
 
 OpenCL SDK
   
   We have tested this code with SDKs from AMD, Apple, Intel and Nvidia.
   To build this code, you need "cl.hpp" header file.
   It is available at http://www.khronos.org/registry/cl/
-  I have tested the code with OpenCL 1.1.
+  We have tested the code with OpenCL 1.1.
 
+GSL
+  
+  We use a random number generator in GSL for generating initial N-body models.
 --------------------------------------------------------------------------------------
 Testing
 
